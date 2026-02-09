@@ -13,6 +13,7 @@ const Register = () => {
     password: '',
     confirmPassword: '',
     role: 'jobseeker',
+    companyName: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -50,6 +51,10 @@ const Register = () => {
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
+    if (formData.role === 'recruiter' && !formData.companyName.trim()) {
+      newErrors.companyName = 'Company name is required for recruiters';
+    }
+
     return newErrors;
   };
 
@@ -78,11 +83,12 @@ const Register = () => {
         email: formData.email,
         password: formData.password,
         role: formData.role,
+        companyName: formData.role === 'recruiter' ? formData.companyName : '',
       });
 
       if (response.data.success) {
         login(response.data.user, response.data.token);
-        navigate(formData.role === 'recruiter' ? '/dashboard' : '/');
+        navigate(formData.role === 'recruiter' ? '/recruiter' : '/job-seeker');
       }
     } catch (err) {
       setGlobalError(err.response?.data?.message || 'Registration failed');
@@ -196,6 +202,22 @@ const Register = () => {
                 </label>
               </div>
             </div>
+
+            {/* Company Name (for Recruiters) */}
+            {formData.role === 'recruiter' && (
+              <div className="animate-fade-in" style={{ animationDelay: '0.55s' }}>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">Company Name</label>
+                <input
+                  type="text"
+                  name="companyName"
+                  value={formData.companyName}
+                  onChange={handleChange}
+                  placeholder="Your Company Name"
+                  className={`input-field ${errors.companyName ? 'border-red-500 focus:ring-red-500' : ''}`}
+                />
+                {errors.companyName && <p className="text-red-600 text-sm mt-1">{errors.companyName}</p>}
+              </div>
+            )}
 
             {/* Submit Button */}
             <button

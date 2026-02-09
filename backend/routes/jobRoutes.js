@@ -4,6 +4,8 @@ const {
   getAllJobs,
   getMyJobs,
   deleteJob,
+  getJobById,
+  updateJob,
 } = require('../controllers/jobController');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
@@ -39,5 +41,15 @@ router.delete(
   roleMiddleware('recruiter'),
   deleteJob
 );
+
+// @route   GET /api/jobs/:id
+// @desc    Get job by id (Public)
+// @access  Public
+router.get('/:id', getJobById);
+
+// @route   PUT /api/jobs/:id
+// @desc    Update a job (Recruiter only - owner)
+// @access  Private
+router.put('/:id', authMiddleware, roleMiddleware('recruiter'), updateJob);
 
 module.exports = router;

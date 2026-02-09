@@ -15,13 +15,21 @@ const generateToken = (user) => {
 // @access  Public
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, companyName } = req.body;
 
     // Validation
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
         message: 'Please provide name, email, and password',
+      });
+    }
+
+    // Additional validation for recruiter
+    if (role === 'recruiter' && !companyName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Company name is required for recruiters',
       });
     }
 
@@ -40,6 +48,7 @@ exports.register = async (req, res) => {
       email,
       password,
       role: role || 'jobseeker',
+      companyName: role === 'recruiter' ? companyName : '',
     });
 
     // Generate token
@@ -55,6 +64,7 @@ exports.register = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        companyName: user.companyName,
       },
     });
   } catch (error) {
@@ -112,6 +122,7 @@ exports.login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        companyName: user.companyName,
       },
     });
   } catch (error) {

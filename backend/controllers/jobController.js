@@ -62,6 +62,53 @@ exports.getAllJobs = async (req, res) => {
   }
 };
 
+// @route   GET /api/jobs/:id
+// @desc    Get job by id (Public)
+// @access  Public
+exports.getJobById = async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id).populate('createdBy', 'name email');
+    if (!job) {
+      return res.status(404).json({ success: false, message: 'Job not found' });
+    }
+
+    res.status(200).json({ success: true, job });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch job', error: error.message });
+  }
+};
+
+// @route   PUT /api/jobs/:id
+// @desc    Update a job posting (Recruiter only - owner)
+// @access  Private (Recruiter)
+exports.updateJob = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const job = await Job.findById(id);
+    if (!job) {
+      return res.status(404).json({ success: false, message: 'Job not found' });
+    }
+
+    // Only creator can update
+    if (job.createdBy.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'You can only update your own job postings' });
+    }
+
+    const { title, description, company, location, salary } = req.body;
+    job.title = title ?? job.title;
+    job.description = description ?? job.description;
+    job.company = company ?? job.company;
+    job.location = location ?? job.location;
+    job.salary = salary ?? job.salary;
+
+    await job.save();
+
+    res.status(200).json({ success: true, message: 'Job updated successfully', job });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to update job', error: error.message });
+  }
+};
+
 // @route   GET /api/jobs/my
 // @desc    Get jobs posted by recruiter (Recruiter only)
 // @access  Private (Recruiter)

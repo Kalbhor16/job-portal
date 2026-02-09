@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import ProtectedRoute from '../components/ProtectedRoute';
 
@@ -16,6 +16,35 @@ const PostJob = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const editId = params.get('edit');
+  const [isEditing, setIsEditing] = useState(!!editId);
+
+  useEffect(() => {
+    if (editId) {
+      const fetchJob = async () => {
+        try {
+          setLoading(true);
+          const res = await api.get(`/jobs/${editId}`);
+          const job = res.data.job;
+          setFormData({
+            title: job.title || '',
+            company: job.company || '',
+            location: job.location || '',
+            salary: job.salary || '',
+            description: job.description || '',
+          });
+        } catch (err) {
+          setError(err.response?.data?.message || 'Failed to load job for editing');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchJob();
+    }
+  }, [editId]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -83,27 +112,38 @@ const PostJob = () => {
     setLoading(true);
 
     try {
-      // Call create job API
-      const response = await api.post('/jobs', {
-        ...formData,
-        salary: Number(formData.salary),
-      });
-
-      if (response.data.success) {
-        setSuccess('✅ Job posted successfully! Redirecting to dashboard...');
-        setFormData({
-          title: '',
-          company: '',
-          location: '',
-          salary: '',
-          description: '',
+      if (isEditing && editId) {
+        const response = await api.put(`/jobs/${editId}`, {
+          ...formData,
+          salary: Number(formData.salary),
         });
-        setErrors({});
+        if (response.data.success) {
+          setSuccess('✅ Job updated successfully! Redirecting...');
+          setTimeout(() => navigate('/recruiter'), 1200);
+        }
+      } else {
+        // Call create job API
+        const response = await api.post('/jobs', {
+          ...formData,
+          salary: Number(formData.salary),
+        });
 
-        // Redirect to dashboard after 2 seconds
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 2000);
+        if (response.data.success) {
+          setSuccess('✅ Job posted successfully! Redirecting to recruiter dashboard...');
+          setFormData({
+            title: '',
+            company: '',
+            location: '',
+            salary: '',
+            description: '',
+          });
+          setErrors({});
+
+          // Redirect to recruiter dashboard after 1.2 seconds
+          setTimeout(() => {
+            navigate('/recruiter');
+          }, 1200);
+        }
       }
     } catch (err) {
       setError(err.response?.data?.message || '❌ Failed to post job. Please try again.');
@@ -114,126 +154,111 @@ const PostJob = () => {
 
   return (
     <ProtectedRoute requiredRole="recruiter">
-      <div className="page-enter">
-        <div className="header">
-          <h1>📝 Post a New Job</h1>
-          <p>Fill in the details to attract qualified candidates</p>
-        </div>
+      <div className="min-h-screen bg-gray-50 py-10">
+        <div className="max-w-3xl mx-auto bg-white shadow-md rounded-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-2xl font-bold text-emerald-700">{isEditing ? '✏️ Edit Job' : '📝 Post a New Job'}</h1>
+              <p className="text-sm text-gray-600">{isEditing ? 'Update the job details and save changes.' : 'Fill in the details to attract qualified candidates.'}</p>
+            </div>
+          </div>
 
-        <div className="container">
-          <div className="form-container">
-            {error && <div className="alert alert-error">{error}</div>}
-            {success && <div className="alert alert-success">{success}</div>}
+          {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">{error}</div>}
+          {success && <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded">{success}</div>}
 
-            <form onSubmit={handleSubmit} className="form">
-              {/* Job Title */}
-              <div className="form-group" style={{ animationDelay: '0.1s' }}>
-                <label htmlFor="title">
-                  💼 Job Title
-                </label>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">💼 Job Title</label>
+              <input
+                className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-200 ${errors.title ? 'border-red-400' : 'border-gray-200'}`}
+                type="text"
+                id="title"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                placeholder="e.g., Senior React Developer"
+              />
+              {errors.title && <p className="text-xs text-red-600 mt-1">{errors.title}</p>}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">🏢 Company Name</label>
                 <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  placeholder="e.g., Senior React Developer"
-                  className={errors.title ? 'input-error' : ''}
-                />
-                {errors.title && <span className="error-text">{errors.title}</span>}
-              </div>
-
-              {/* Company Name */}
-              <div className="form-group" style={{ animationDelay: '0.15s' }}>
-                <label htmlFor="company">
-                  🏢 Company Name
-                </label>
-                <input
+                  className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-200 ${errors.company ? 'border-red-400' : 'border-gray-200'}`}
                   type="text"
                   id="company"
                   name="company"
                   value={formData.company}
                   onChange={handleChange}
                   placeholder="e.g., Tech Corp"
-                  className={errors.company ? 'input-error' : ''}
                 />
-                {errors.company && <span className="error-text">{errors.company}</span>}
+                {errors.company && <p className="text-xs text-red-600 mt-1">{errors.company}</p>}
               </div>
 
-              {/* Location */}
-              <div className="form-group" style={{ animationDelay: '0.2s' }}>
-                <label htmlFor="location">
-                  📍 Location
-                </label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">📍 Location</label>
                 <input
+                  className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-200 ${errors.location ? 'border-red-400' : 'border-gray-200'}`}
                   type="text"
                   id="location"
                   name="location"
                   value={formData.location}
                   onChange={handleChange}
                   placeholder="e.g., San Francisco, CA"
-                  className={errors.location ? 'input-error' : ''}
                 />
-                {errors.location && <span className="error-text">{errors.location}</span>}
+                {errors.location && <p className="text-xs text-red-600 mt-1">{errors.location}</p>}
               </div>
+            </div>
 
-              {/* Salary */}
-              <div className="form-group" style={{ animationDelay: '0.25s' }}>
-                <label htmlFor="salary">
-                  💰 Annual Salary (USD)
-                </label>
-                <input
-                  type="number"
-                  id="salary"
-                  name="salary"
-                  value={formData.salary}
-                  onChange={handleChange}
-                  placeholder="e.g., 150000"
-                  min="0"
-                  className={errors.salary ? 'input-error' : ''}
-                />
-                {errors.salary && <span className="error-text">{errors.salary}</span>}
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">💰 Annual Salary (USD)</label>
+              <input
+                className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-200 ${errors.salary ? 'border-red-400' : 'border-gray-200'}`}
+                type="number"
+                id="salary"
+                name="salary"
+                value={formData.salary}
+                onChange={handleChange}
+                placeholder="e.g., 150000"
+                min="0"
+              />
+              {errors.salary && <p className="text-xs text-red-600 mt-1">{errors.salary}</p>}
+            </div>
 
-              {/* Job Description */}
-              <div className="form-group" style={{ animationDelay: '0.3s' }}>
-                <label htmlFor="description">
-                  📄 Job Description
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder="Describe the job role, responsibilities, and requirements..."
-                  rows="6"
-                  className={errors.description ? 'input-error' : ''}
-                ></textarea>
-                {errors.description && <span className="error-text">{errors.description}</span>}
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">📄 Job Description</label>
+              <textarea
+                className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-200 ${errors.description ? 'border-red-400' : 'border-gray-200'}`}
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                placeholder="Describe the job role, responsibilities, and requirements..."
+                rows="6"
+              ></textarea>
+              {errors.description && <p className="text-xs text-red-600 mt-1">{errors.description}</p>}
+            </div>
 
-              {/* Submit Button */}
+            <div className="flex items-center gap-3">
               <button
                 type="submit"
-                className="btn btn-success"
                 disabled={loading}
-                style={{ animationDelay: '0.35s', width: '100%' }}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-60"
               >
-                {loading ? (
-                  <>
-                    <span className="spinner"></span>
-                    Posting...
-                  </>
-                ) : (
-                  '🚀 Post Job'
-                )}
+                {loading ? 'Saving...' : isEditing ? 'Save Changes' : '🚀 Post Job'}
               </button>
-            </form>
-
-            <div className="form-hint" style={{ animationDelay: '0.4s' }}>
-              <p>💡 <strong>Pro Tip:</strong> Be descriptive and clear about the job requirements to attract quality candidates!</p>
+              <button
+                type="button"
+                onClick={() => navigate('/recruiter')}
+                className="px-4 py-2 border rounded text-sm"
+              >
+                Cancel
+              </button>
             </div>
-          </div>
+          </form>
+
+          <div className="mt-4 text-sm text-gray-600">💡 <strong>Pro Tip:</strong> Be descriptive and clear about the job requirements to attract quality candidates!</div>
         </div>
       </div>
     </ProtectedRoute>

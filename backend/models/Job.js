@@ -25,6 +25,15 @@ const jobSchema = new mongoose.Schema(
       type: Number,
       required: [true, 'Please provide a salary'],
     },
+    requirements: {
+      type: [String],
+      default: [],
+    },
+    jobType: {
+      type: String,
+      enum: ['Full-time', 'Part-time', 'Internship'],
+      default: 'Full-time',
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

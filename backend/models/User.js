@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema(
       enum: ['jobseeker', 'recruiter'],
       default: 'jobseeker',
     },
+    companyName: {
+      type: String,
+      default: '',
+    },
   },
   { timestamps: true }
 );

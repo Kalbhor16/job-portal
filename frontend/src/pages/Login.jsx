@@ -15,6 +15,7 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [globalError, setGlobalError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showRegisterPopup, setShowRegisterPopup] = useState(false);
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -45,7 +46,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setGlobalError('');
-
+    setShowRegisterPopup(false);
     const newErrors = validateForm();
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -61,10 +62,21 @@ const Login = () => {
 
       if (response.data.success) {
         login(response.data.user, response.data.token);
-        navigate(response.data.user.role === 'recruiter' ? '/dashboard' : '/');
+        // Navigate to role-specific dashboards
+        if (response.data.user.role === 'recruiter') {
+          navigate('/recruiter');
+        } else {
+          navigate('/job-seeker');
+        }
       }
     } catch (err) {
-      setGlobalError(err.response?.data?.message || 'Login failed');
+      const msg = err.response?.data?.message || '';
+      // If backend indicates user not found / not registered, show a register prompt
+      if (err.response?.status === 404 || /not register|not found|no user/i.test(msg)) {
+        setShowRegisterPopup(true);
+      } else {
+        setGlobalError(msg || 'Login failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -171,6 +183,28 @@ const Login = () => {
               <p className="text-xs text-gray-600">password123</p>
             </div>
           </div>
+          {showRegisterPopup && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+              <div className="bg-white p-6 rounded shadow-lg max-w-sm w-full mx-4">
+                <h4 className="text-lg font-semibold mb-2">User not registered</h4>
+                <p className="text-sm text-gray-700 mb-4">We couldn't find an account with that email. Please register first to continue.</p>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => setShowRegisterPopup(false)}
+                    className="px-4 py-2 rounded bg-gray-100 hover:bg-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => navigate('/register')}
+                    className="px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700"
+                  >
+                    Register
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
