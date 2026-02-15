@@ -103,3 +103,99 @@ exports.getConversation = async (req, res) => {
     });
   }
 };
+
+// @route   GET /api/messages/conversations/all/list
+// @desc    Get all conversations for current recruiter
+// @access  Private
+exports.getAllConversations = async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    const currentUserId = new mongoose.Types.ObjectId(req.user.id);
+
+    // Get all unique users who have messaged with current user
+    const conversations = await Message.aggregate([
+      {
+        $match: {
+          $or: [
+            { sender: currentUserId },
+            { receiver: currentUserId }
+          ]
+        }
+      },
+      {
+        $sort: { createdAt: -1 }
+      },
+      {
+        $group: {
+          _id: {
+            $cond: [
+              { $eq: ['$sender', currentUserId] },
+              '$receiver',
+              '$sender'
+            ]
+          },
+          lastMessage: { $first: '$$ROOT' },
+          messageCount: { $sum: 1 }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'userDetails'
+        }
+      },
+      {
+        $unwind: '$userDetails'
+      },
+      {
+        $lookup: {
+          from: 'applications',
+          let: { userId: '$_id', recruiterId: currentUserId },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$applicant', '$$userId'] },
+                    { $eq: ['$recruiter', '$$recruiterId'] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: 'application'
+        }
+      },
+      {
+        $sort: { 'lastMessage.createdAt': -1 }
+      }
+    ]);
+
+    const formattedConversations = conversations.map(conv => ({
+      id: conv._id,
+      name: conv.userDetails.name,
+      email: conv.userDetails.email,
+      role: conv.userDetails.role,
+      unread: 0,
+      lastMessage: conv.lastMessage.message,
+      lastMessageTime: conv.lastMessage.createdAt,
+      messageCount: conv.messageCount,
+      applicationId: conv.application?.[0]?._id || null,
+      jobId: conv.lastMessage.job
+    }));
+
+    res.status(200).json({
+      success: true,
+      count: formattedConversations.length,
+      data: formattedConversations
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch conversations',
+      error: error.message,
+    });
+  }
+};

@@ -58,9 +58,9 @@ const Dashboard = () => {
   if (loading) {
     return (
       <ProtectedRoute requiredRole="recruiter">
-        <div className="loading">
-          <div className="spinner"></div>
-          <p>Loading your dashboard...</p>
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-600">Loading your dashboard...</p>
         </div>
       </ProtectedRoute>
     );
@@ -68,87 +68,119 @@ const Dashboard = () => {
 
   return (
     <ProtectedRoute requiredRole="recruiter">
-      <div className="page-enter">
-        <div className="header">
-          <h1>👋 Welcome, {user?.name}!</h1>
-          <p>Manage your job postings and reach top talent</p>
-        </div>
+      <div className="min-h-screen bg-gray-50 py-10 px-4">
+        <div className="max-w-6xl mx-auto">
 
-        <div className="container">
-          <div className="dashboard">
-            {/* Dashboard Actions */}
-            <div className="dashboard-actions">
-              <Link to="/post-job" className="btn btn-success">
-                ➕ Post New Job
-              </Link>
-              <Link to="/" className="btn">
-                👀 View All Jobs
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-800">
+              👋 Welcome, {user?.name}!
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Manage your job postings and reach top talent
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-wrap gap-4 mb-8">
+            <Link
+              to="/post-job"
+              className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow transition"
+            >
+              ➕ Post New Job
+            </Link>
+            <Link
+              to="/"
+              className="bg-gray-800 hover:bg-gray-900 text-white px-5 py-2 rounded-lg shadow transition"
+            >
+              👀 View All Jobs
+            </Link>
+          </div>
+
+          <hr className="my-8 border-gray-200" />
+
+          {/* Job Listings */}
+          <h3 className="text-xl font-semibold mb-6">
+            📋 Your Job Postings
+          </h3>
+
+          {error && (
+            <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4">
+              {error}
+            </div>
+          )}
+          {deleteSuccess && (
+            <div className="bg-green-100 text-green-700 px-4 py-2 rounded mb-4">
+              {deleteSuccess}
+            </div>
+          )}
+          {deleteError && (
+            <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4">
+              {deleteError}
+            </div>
+          )}
+
+          {jobs.length === 0 ? (
+            <div className="bg-white p-8 rounded-xl shadow text-center">
+              <p className="text-lg">📭 You haven't posted any jobs yet</p>
+              <p className="text-gray-500 mt-4">
+                Start by creating your first job posting to attract talented candidates!
+              </p>
+              <Link
+                to="/post-job"
+                className="inline-block mt-6 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg shadow transition"
+              >
+                ✨ Create Your First Job
               </Link>
             </div>
+          ) : (
+            <>
+              <p className="text-gray-500 mb-6">
+                You have <strong>{jobs.length}</strong> active job posting{jobs.length !== 1 ? 's' : ''}
+              </p>
 
-            <hr style={{ margin: '2rem 0', border: 'none', borderTop: '2px solid #ecf0f1' }} />
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {jobs.map((job) => (
+                  <div
+                    key={job._id}
+                    className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition"
+                  >
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                      {job.title}
+                    </h3>
 
-            {/* Job Listings */}
-            <h3 style={{ marginTop: '2rem', fontSize: '1.4rem' }}>📋 Your Job Postings</h3>
+                    <p className="text-gray-600 mb-1">🏢 {job.company}</p>
+                    <p className="text-gray-600 mb-1">📍 {job.location}</p>
+                    <p className="text-gray-600 mb-3">
+                      💰 ${job.salary.toLocaleString()}/year
+                    </p>
 
-            {error && <div className="alert alert-error">{error}</div>}
-            {deleteSuccess && <div className="alert alert-success">{deleteSuccess}</div>}
-            {deleteError && <div className="alert alert-error">{deleteError}</div>}
+                    <p className="text-gray-500 text-sm mb-4 line-clamp-3">
+                      {job.description}
+                    </p>
 
-            {jobs.length === 0 ? (
-              <div className="no-data" style={{ marginTop: '2rem' }}>
-                <p>📭 You haven't posted any jobs yet</p>
-                <p style={{ fontSize: '0.9rem', marginTop: '1rem' }}>
-                  Start by creating your first job posting to attract talented candidates!
-                </p>
-                <Link to="/post-job" className="btn btn-success" style={{ maxWidth: '250px', marginTop: '1.5rem' }}>
-                  ✨ Create Your First Job
-                </Link>
+                    <p className="text-sm text-gray-400 mb-4">
+                      Posted on{' '}
+                      <strong>
+                        {new Date(job.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </strong>
+                    </p>
+
+                    <button
+                      onClick={() => handleDeleteJob(job._id, job.title)}
+                      className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg transition"
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
+                ))}
               </div>
-            ) : (
-              <>
-                <p style={{
-                  color: '#7f8c8d',
-                  marginBottom: '1.5rem',
-                  fontSize: '0.95rem'
-                }}>
-                  You have <strong>{jobs.length}</strong> active job posting{jobs.length !== 1 ? 's' : ''}
-                </p>
-                <div className="jobs-container">
-                  {jobs.map((job, index) => (
-                    <div key={job._id} style={{
-                      animation: `slideInRight 0.5s ease-out ${0.1 + index * 0.05}s backwards`
-                    }}>
-                      <div className="job-card">
-                        <h3>{job.title}</h3>
-                        <p className="company">🏢 {job.company}</p>
-                        <p className="location">📍 {job.location}</p>
-                        <p className="salary">💰 ${job.salary.toLocaleString()}/year</p>
-                        <p className="description">{job.description}</p>
-                        <div className="recruiter-info">
-                          <p>
-                            Posted on: <strong>{new Date(job.createdAt).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric'
-                            })}</strong>
-                          </p>
-                        </div>
-                        <div className="job-card actions">
-                          <button
-                            className="delete-btn"
-                            onClick={() => handleDeleteJob(job._id, job.title)}
-                          >
-                            🗑️ Delete
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+            </>
+          )}
         </div>
       </div>
     </ProtectedRoute>

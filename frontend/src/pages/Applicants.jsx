@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import RecruiterLayout from '../layouts/RecruiterLayout';
 
 const Applicants = () => {
   const { jobId } = useParams();
@@ -52,7 +53,7 @@ const Applicants = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <RecruiterLayout>
       <div className="mb-6 flex items-center gap-4">
         <button
           onClick={() => navigate('/recruiter')}
@@ -72,10 +73,12 @@ const Applicants = () => {
       ) : (
         <div className="space-y-4">
           {applications.map((app) => (
-            <div key={app._id} className="border rounded-lg p-4 bg-white shadow-sm">
+            <div key={app._id} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-800">{app.applicant.name}</h3>
+                <div className="flex-1 cursor-pointer" onClick={() => navigate(`/recruiter/applicants/${app._id}`)}>
+                  <h3 className="text-lg font-semibold text-gray-800 hover:text-emerald-600 transition-colors">
+                    {app.applicant.name}
+                  </h3>
                   <p className="text-sm text-gray-600">{app.applicant.email}</p>
                   {app.coverLetter && (
                     <div className="mt-2 p-2 bg-gray-50 rounded">
@@ -91,6 +94,13 @@ const Applicants = () => {
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeColor(app.status)}`}>
                     {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
                   </span>
+
+                  <button
+                    onClick={() => navigate(`/recruiter/applicants/${app._id}`)}
+                    className="px-3 py-1.5 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-700"
+                  >
+                    View Details
+                  </button>
 
                   {app.status === 'pending' && (
                     <div className="flex gap-2">
@@ -130,7 +140,7 @@ const Applicants = () => {
           ))}
         </div>
       )}
-    </div>
+    </RecruiterLayout>
   );
 };
 

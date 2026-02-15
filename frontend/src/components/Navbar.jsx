@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import RecruiterHeader from './RecruiterHeader';
 
 const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // If user is recruited, show RecruiterHeader instead
+  if (isAuthenticated && user?.role === 'recruiter') {
+    return <RecruiterHeader />;
+  }
 
   const handleLogout = () => {
     logout();

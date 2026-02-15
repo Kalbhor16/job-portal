@@ -120,7 +120,8 @@ exports.updateApplicationStatus = async (req, res) => {
     const { status } = req.body;
     const { id } = req.params;
 
-    if (!['pending', 'accepted', 'rejected'].includes(status)) {
+    const validStatuses = ['New', 'Reviewed', 'Shortlisted', 'Interview Scheduled', 'Rejected', 'Hired'];
+    if (!validStatuses.includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid status' });
     }
 
@@ -147,6 +148,160 @@ exports.updateApplicationStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update application status',
+      error: error.message,
+    });
+  }
+};
+
+// @route   GET /api/applications/:id
+// @desc    Get single application details (Recruiter only)
+// @access  Private
+exports.getApplicationDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const application = await Application.findById(id)
+      .populate('job', 'title description experienceLevel skills requiredLinks')
+      .populate('applicant', 'firstName lastName email phone headline location profilePhoto')
+      .populate('recruiter', 'firstName lastName');
+
+    if (!application) {
+      return res.status(404).json({ success: false, message: 'Application not found' });
+    }
+
+    // Verify recruiter has access
+    if (application.recruiter._id.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    res.status(200).json({
+      success: true,
+      application,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch application details',
+      error: error.message,
+    });
+  }
+};
+
+// @route   PATCH /api/applications/:id/schedule-interview
+// @desc    Schedule interview for applicant (Recruiter only)
+// @access  Private
+exports.scheduleInterview = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { interviewDate, interviewMessage } = req.body;
+
+    if (!interviewDate) {
+      return res.status(400).json({ success: false, message: 'Interview date is required' });
+    }
+
+    const application = await Application.findById(id).populate('job');
+
+    if (!application) {
+      return res.status(404).json({ success: false, message: 'Application not found' });
+    }
+
+    // Verify recruiter owns the job
+    if (application.job.createdBy.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    application.interviewScheduledAt = new Date(interviewDate);
+    application.interviewMessage = interviewMessage || '';
+    application.status = 'Interview Scheduled';
+    await application.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Interview scheduled successfully',
+      application,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to schedule interview',
+      error: error.message,
+    });
+  }
+};
+
+// @route   PATCH /api/applications/:id/reject
+// @desc    Reject an application (Recruiter only)
+// @access  Private
+exports.rejectApplication = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rejectionReason } = req.body;
+
+    const application = await Application.findById(id).populate('job');
+
+    if (!application) {
+      return res.status(404).json({ success: false, message: 'Application not found' });
+    }
+
+    // Verify recruiter owns the job
+    if (application.job.createdBy.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    application.status = 'Rejected';
+    application.rejectionReason = rejectionReason || '';
+    await application.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Application rejected',
+      application,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to reject application',
+      error: error.message,
+    });
+  }
+};
+
+// @route   PATCH /api/applications/:id/rate
+// @desc    Rate an applicant (Recruiter only)
+// @access  Private
+exports.rateApplicant = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rating, notes } = req.body;
+
+    if (rating === undefined || rating < 0 || rating > 5) {
+      return res.status(400).json({ success: false, message: 'Rating must be between 0 and 5' });
+    }
+
+    const application = await Application.findById(id).populate('job');
+
+    if (!application) {
+      return res.status(404).json({ success: false, message: 'Application not found' });
+    }
+
+    // Verify recruiter owns the job
+    if (application.job.createdBy.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    application.rating = rating;
+    application.notes = notes || application.notes;
+    await application.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Applicant rated successfully',
+      application,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to rate applicant',
       error: error.message,
     });
   }
