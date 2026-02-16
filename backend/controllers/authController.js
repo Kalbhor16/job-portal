@@ -15,13 +15,13 @@ const generateToken = (user) => {
 // @access  Public
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role, companyName } = req.body;
+    const { fullName, email, password, role, companyName } = req.body;
 
     // Validation
-    if (!name || !email || !password) {
+    if (!fullName || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide name, email, and password',
+        message: 'Please provide fullName, email, and password',
       });
     }
 
@@ -44,7 +44,7 @@ exports.register = async (req, res) => {
 
     // Create new user
     const user = await User.create({
-      name,
+      fullName,
       email,
       password,
       role: role || 'jobseeker',
@@ -61,7 +61,7 @@ exports.register = async (req, res) => {
       token,
       user: {
         id: user._id,
-        name: user.name,
+        fullName: user.fullName,
         email: user.email,
         role: user.role,
         companyName: user.companyName,
@@ -119,7 +119,7 @@ exports.login = async (req, res) => {
       token,
       user: {
         id: user._id,
-        name: user.name,
+        fullName: user.fullName,
         email: user.email,
         role: user.role,
         companyName: user.companyName,

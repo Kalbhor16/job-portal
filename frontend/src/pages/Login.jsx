@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
@@ -160,12 +160,12 @@ const Login = () => {
           </div>
 
           {/* Register Link */}
-          <a
-            href="/register"
+          <Link
+            to="/register"
             className="block w-full py-3 px-6 text-center bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold rounded-lg transition-colors"
           >
             Create an Account
-          </a>
+          </Link>
 
           {/* Demo Credentials Box */}
           <div className="mt-6 p-4 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg">

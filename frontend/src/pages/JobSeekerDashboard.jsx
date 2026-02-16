@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
+
 const JobSeekerDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -34,9 +35,11 @@ const JobSeekerDashboard = () => {
     <div className="max-w-6xl mx-auto p-6">
       <header className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-extrabold text-emerald-700">Welcome, {user?.name || 'Job Seeker'}</h1>
+          <h1 className="text-3xl font-extrabold text-emerald-700">Welcome, {user?.fullName || 'Job Seeker'}</h1>
           <p className="text-sm text-gray-600">Explore latest job opportunities curated for you.</p>
+          
         </div>
+        
       </header>
 
       {loading ? (

@@ -8,11 +8,14 @@ const User = require('../models/User');
 exports.applyJob = async (req, res) => {
   try {
     const { jobId } = req.params;
-    const { resumeUrl, coverLetter } = req.body;
+    const { coverLetter } = req.body;
+
+    // Accept resume via upload or URL
+    const resumeUrl = req.file ? req.file.path : req.body.resumeUrl;
 
     // Validation
     if (!resumeUrl) {
-      return res.status(400).json({ success: false, message: 'Resume URL is required' });
+      return res.status(400).json({ success: false, message: 'Resume URL or uploaded file is required' });
     }
 
     // Check if job exists
@@ -35,6 +38,7 @@ exports.applyJob = async (req, res) => {
     const application = await Application.create({
       job: jobId,
       applicant: req.user.id,
+      recruiter: job.createdBy, // assign recruiter from job
       resumeUrl,
       coverLetter: coverLetter || '',
     });

@@ -75,7 +75,7 @@ const Navbar = () => {
                 )}
                 <div className="flex items-center gap-3 ml-2 pl-4 border-l border-gray-200">
                   <span className="text-sm text-gray-700 font-medium max-w-[100px] truncate">
-                    👤 {user?.name}
+                    👤 {user?.fullName}
                   </span>
                   <button
                     onClick={handleLogout}
@@ -148,7 +148,7 @@ const Navbar = () => {
                   </>
                 )}
                 <div className="px-4 py-3 border-t border-gray-200 mt-2">
-                  <p className="text-sm text-gray-700 font-medium mb-2">👤 {user?.name}</p>
+                  <p className="text-sm text-gray-700 font-medium mb-2">👤 {user?.fullName}</p>
                   <button
                     onClick={() => {
                       handleLogout();

@@ -74,7 +74,7 @@ const Dashboard = () => {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-800">
-              👋 Welcome, {user?.name}!
+              👋 Welcome, {user?.fullName}!
             </h1>
             <p className="text-gray-600 mt-2">
               Manage your job postings and reach top talent

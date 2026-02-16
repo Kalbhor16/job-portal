@@ -122,7 +122,7 @@ const RecruiterDashboard = () => {
       {/* Header */}
       <header className="mb-8">
         <h1 className="text-3xl font-extrabold text-gray-900">
-          Welcome back, <span className="text-emerald-600">{user?.name || 'Recruiter'}</span>
+          Welcome back, <span className="text-emerald-600">{user?.fullName || 'Recruiter'}</span>
         </h1>
         <p className="text-gray-600 mt-1">
           Here's what's happening with your recruitment process.

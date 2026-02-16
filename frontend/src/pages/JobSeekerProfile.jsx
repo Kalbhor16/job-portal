@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
   ArrowLeft,
   Mail,
@@ -21,6 +22,7 @@ import api from '../services/api';
 
 const JobSeekerProfile = () => {
   const { userId } = useParams();
+  const { user: authUser } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,14 +30,16 @@ const JobSeekerProfile = () => {
 
   useEffect(() => {
     fetchJobSeekerProfile();
-  }, [userId]);
+  }, [userId, authUser]);
 
   const fetchJobSeekerProfile = async () => {
     try {
       setLoading(true);
       // Try to fetch real data from API
       try {
-        const response = await api.get(`/users/${userId}/profile`);
+        const idToFetch = userId || authUser?.id || authUser?._id;
+        if (!idToFetch) throw new Error('No user id available');
+        const response = await api.get(`/users/${idToFetch}/profile`);
         if (response.data.success) {
           setProfile(response.data.profile);
         }

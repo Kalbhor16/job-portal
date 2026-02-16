@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
@@ -8,7 +8,7 @@ const Register = () => {
   const { login } = useAuth();
 
   const [formData, setFormData] = useState({
-    name: '',
+    fullName: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -35,10 +35,10 @@ const Register = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    } else if (formData.name.trim().length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = 'Full name is required';
+    } else if (formData.fullName.trim().length < 2) {
+      newErrors.fullName = 'Full name must be at least 2 characters';
     }
 
     const emailError = validateEmail(formData.email);
@@ -79,7 +79,7 @@ const Register = () => {
     try {
       setLoading(true);
       const response = await api.post('/auth/register', {
-        name: formData.name,
+        fullName: formData.fullName,
         email: formData.email,
         password: formData.password,
         role: formData.role,
@@ -123,13 +123,13 @@ const Register = () => {
               <label className="block text-sm font-semibold text-gray-900 mb-2">Full Name</label>
               <input
                 type="text"
-                name="name"
-                value={formData.name}
+                name="fullName"
+                value={formData.fullName}
                 onChange={handleChange}
                 placeholder="John Doe"
-                className={`input-field ${errors.name ? 'border-red-500 focus:ring-red-500' : ''}`}
+                className={`input-field ${errors.fullName ? 'border-red-500 focus:ring-red-500' : ''}`}
               />
-              {errors.name && <p className="text-red-600 text-sm mt-1">{errors.name}</p>}
+              {errors.fullName && <p className="text-red-600 text-sm mt-1">{errors.fullName}</p>}
             </div>
 
             {/* Email Input */}
@@ -240,9 +240,9 @@ const Register = () => {
           {/* Login Link */}
           <p className="text-center mt-6 text-gray-600">
             Already have an account?{' '}
-            <a href="/login" className="text-green-600 font-semibold hover:text-green-700">
+            <Link to="/login" className="text-green-600 font-semibold hover:text-green-700">
               Sign In
-            </a>
+            </Link>
           </p>
         </div>
       </div>

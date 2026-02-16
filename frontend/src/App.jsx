@@ -21,6 +21,11 @@ import Notifications from './pages/Notifications';
 import JobSeekerProfile from './pages/JobSeekerProfile';
 import RecruiterProfile from './pages/RecruiterProfile';
 import CompanyProfile from './pages/CompanyProfile';
+import ApplyJob from './pages/ApplyJob';
+import EditProfile from './pages/EditProfile';
+import Applications from './pages/Applications';
+import ApplicationDetails from './pages/ApplicationDetails';
+import SavedJobs from './pages/SavedJobs';
 
 function App() {
   return (
@@ -34,7 +39,6 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/job-details/:jobId" element={<JobDetails />} />
-            <Route path="/dashboard" element={<Dashboard />} />
           </Route>
 
           {/* JobSeeker Routes */}
@@ -43,6 +47,86 @@ function App() {
             element={
               <ProtectedRoute requiredRole="jobseeker">
                 <JobSeekerDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* JobSeeker Dashboard */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute requiredRole="jobseeker">
+                <JobSeekerDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* JobSeeker Profile */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute requiredRole="jobseeker">
+                <JobSeekerProfile />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* JobSeeker Edit Profile */}
+          <Route
+            path="/profile/edit"
+            element={
+              <ProtectedRoute requiredRole="jobseeker">
+                <EditProfile />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Apply Job */}
+          <Route
+            path="/jobs/:jobId/apply"
+            element={
+              <ProtectedRoute requiredRole="jobseeker">
+                <ApplyJob />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* My Applications */}
+          <Route
+            path="/applications"
+            element={
+              <ProtectedRoute requiredRole="jobseeker">
+                <Applications />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Application Details */}
+          <Route
+            path="/applications/:applicationId"
+            element={
+              <ProtectedRoute requiredRole="jobseeker">
+                <ApplicationDetails />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Saved Jobs */}
+          <Route
+            path="/saved-jobs"
+            element={
+              <ProtectedRoute requiredRole="jobseeker">
+                <SavedJobs />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Job Seeker Messaging */}
+          <Route
+            path="/messages/:jobId"
+            element={
+              <ProtectedRoute requiredRole="jobseeker">
+                <Messages />
               </ProtectedRoute>
             }
           />

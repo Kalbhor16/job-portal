@@ -136,10 +136,10 @@ const RecruiterHeader = () => {
                 }`}
               >
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-600 to-emerald-700 flex items-center justify-center text-white font-bold text-xs group-hover:scale-110 transition-transform duration-300">
-                  {user?.name?.charAt(0).toUpperCase() || 'R'}
+                  {user?.fullName?.charAt(0).toUpperCase() || 'R'}
                 </div>
                 <div className="hidden md:flex flex-col items-start text-sm">
-                  <span className="font-semibold text-gray-900">{user?.name || 'Recruiter'}</span>
+                  <span className="font-semibold text-gray-900">{user?.fullName || 'Recruiter'}</span>
                   <span className="text-xs text-gray-500">{user?.email?.split('@')[0] || 'User'}</span>
                 </div>
                 <svg className={`w-4 h-4 text-gray-700 transition-transform duration-300 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,7 +152,7 @@ const RecruiterHeader = () => {
                 <div className="absolute right-0 mt-2 w-64 rounded-xl shadow-2xl bg-white border border-gray-200 py-1 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                   <div className="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-xl">
                     <p className="text-sm font-bold text-gray-900">
-                      {user?.name || 'Recruiter'}
+                      {user?.fullName || 'Recruiter'}
                     </p>
                     <p className="text-xs text-gray-600 mt-1">
                       {user?.email}
@@ -270,11 +270,11 @@ const RecruiterHeader = () => {
             <div className="px-4 py-3 border-t border-gray-100 mt-2">
               <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 mb-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-600 to-emerald-700 flex items-center justify-center text-white font-bold text-sm">
-                  {user?.name?.charAt(0).toUpperCase() || 'R'}
+                  {user?.fullName?.charAt(0).toUpperCase() || 'R'}
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-bold text-gray-900">
-                    {user?.name || 'Recruiter'}
+                    {user?.fullName || 'Recruiter'}
                   </p>
                   <p className="text-xs text-gray-600">
                     {user?.email?.split('@')[0] || 'User'}

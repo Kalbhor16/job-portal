@@ -28,6 +28,8 @@ app.use('/api/applications', require('./routes/applicationRoutes'));
 app.use('/api/messages', require('./routes/messageRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/recruiter', require('./routes/profileRoutes'));
+app.use('/api/profile', require('./routes/jobSeekerProfileRoutes'));
+app.use('/api/saved-jobs', require('./routes/savedJobRoutes'));
 app.use('/api/seed', require('./routes/seedRoutes'));
 
 // Health check

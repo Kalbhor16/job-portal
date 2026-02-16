@@ -3,9 +3,9 @@ const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema(
   {
-    name: {
+    fullName: {
       type: String,
-      required: [true, 'Please provide a name'],
+      required: [true, 'Please provide your full name'],
       trim: true,
     },
     email: {
@@ -33,6 +33,79 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    phone: {
+      type: String,
+      default: '',
+    },
+    profilePhoto: {
+      type: String,
+      default: '',
+    },
+    headline: {
+      type: String,
+      default: '',
+    },
+    summary: {
+      type: String,
+      default: '',
+    },
+    experienceLevel: {
+      type: String,
+      enum: ['Internship', 'Entry', 'Mid', 'Senior', 'Lead', 'Director', 'Other'],
+      default: 'Entry',
+    },
+    skills: [{ type: String }],
+    location: {
+      type: String,
+      default: '',
+    },
+    resumeURL: {
+      type: String,
+      default: '',
+    },
+    portfolioLink: {
+      type: String,
+      default: '',
+    },
+    linkedinLink: {
+      type: String,
+      default: '',
+    },
+    githubLink: {
+      type: String,
+      default: '',
+    },
+    majorProjectLink: {
+      type: String,
+      default: '',
+    },
+    education: [
+      {
+        institution: { type: String },
+        degree: { type: String },
+        fieldOfStudy: { type: String },
+        startDate: { type: Date },
+        endDate: { type: Date },
+        description: { type: String },
+      },
+    ],
+    workExperience: [
+      {
+        title: { type: String },
+        company: { type: String },
+        location: { type: String },
+        startDate: { type: Date },
+        endDate: { type: Date },
+        description: { type: String },
+      },
+    ],
+    certifications: [{ type: String }],
+    savedJobs: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Job',
+      },
+    ],
   },
   { timestamps: true }
 );

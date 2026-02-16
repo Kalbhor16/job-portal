@@ -62,7 +62,7 @@ const RecruiterDashboardExample = () => {
       {/* Header Section */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-gray-900">
-          Welcome, {user?.name}! 👋
+          Welcome, {user?.fullName}! 👋
         </h1>
         <p className="text-gray-600 mt-2">
           {user?.companyName} • Manage your recruitment process
