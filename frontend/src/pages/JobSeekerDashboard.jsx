@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import Navbar from '../components/Navbar';
+import JobSeekerHeader from '../components/JobSeekerHeader';
 import {
   Briefcase,
   Heart,
@@ -543,7 +543,7 @@ const JobSeekerDashboard = () => {
   if (loading) {
     return (
       <>
-        <Navbar />
+        <JobSeekerHeader notificationCount={notifications} />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
@@ -556,7 +556,7 @@ const JobSeekerDashboard = () => {
 
   return (
     <>
-      <Navbar />
+      <JobSeekerHeader notificationCount={notifications} />
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-green-50">
         <div className="max-w-7xl mx-auto p-4 md:p-6">
           {/* Header */}
