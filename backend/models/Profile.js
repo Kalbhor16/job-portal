@@ -36,11 +36,20 @@ const profileSchema = new mongoose.Schema(
     summary: { type: String, default: '' },
     experienceLevel: {
       type: String,
-      enum: ['Intern', 'Entry', 'Mid', 'Senior', 'Lead', 'Manager', 'Director', 'Executive'],
-      default: 'Entry',
+      enum: ['Fresher', '1-2 Years', '3-5 Years', '5+ Years'],
+      default: 'Fresher',
     },
-    skills: [{ type: String }],
-    location: { type: String, default: '' },
+    skills: {
+      type: [String],
+      required: [true, 'At least one skill is required'],
+      validate: {
+        validator: function (v) {
+          return Array.isArray(v) && v.length > 0;
+        },
+        message: 'At least one skill is required',
+      },
+    },
+    location: { type: String, required: [true, 'Location is required'] },
     resumeURL: { type: String, default: '' },
     portfolioLink: { type: String, default: '' },
     linkedinLink: { type: String, default: '' },

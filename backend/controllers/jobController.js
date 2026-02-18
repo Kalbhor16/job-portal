@@ -88,20 +88,109 @@ exports.createJob = async (req, res) => {
 };
 
 // @route   GET /api/jobs
-// @desc    Get all job listings (Public)
+// @desc    Get all job listings with advanced filtering (Public)
 // @access  Public
 exports.getAllJobs = async (req, res) => {
   try {
-    // Filter by status (only show Active jobs to public)
+    const {
+      keyword,
+      location,
+      jobType,
+      salaryMin,
+      salaryMax,
+      experienceLevel,
+      company,
+      remote,
+      sortBy,
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    // Build query object
     const query = { status: 'Active' };
 
+    // Search by keyword (title, description, company, location)
+    if (keyword) {
+      query.$or = [
+        { title: { $regex: keyword, $options: 'i' } },
+        { description: { $regex: keyword, $options: 'i' } },
+        { company: { $regex: keyword, $options: 'i' } },
+      ];
+    }
+
+    // Filter by location
+    if (location) {
+      query.location = { $regex: location, $options: 'i' };
+    }
+
+    // Filter by job type
+    if (jobType) {
+      if (Array.isArray(jobType)) {
+        query.jobType = { $in: jobType };
+      } else {
+        query.jobType = jobType;
+      }
+    }
+
+    // Filter by experience level
+    if (experienceLevel) {
+      if (Array.isArray(experienceLevel)) {
+        query.experienceLevel = { $in: experienceLevel };
+      } else {
+        query.experienceLevel = experienceLevel;
+      }
+    }
+
+    // Filter by company
+    if (company) {
+      query.company = { $regex: company, $options: 'i' };
+    }
+
+    // Filter by salary range
+    if (salaryMin || salaryMax) {
+      query.$and = [];
+      if (salaryMin) {
+        query.$and.push({ salaryMax: { $gte: parseInt(salaryMin) } });
+      }
+      if (salaryMax) {
+        query.$and.push({ salaryMin: { $lte: parseInt(salaryMax) } });
+      }
+    }
+
+    // Filter for remote jobs
+    if (remote === 'true' || remote === true) {
+      query.jobType = 'Remote';
+    }
+
+    // Determine sort order
+    let sortOption = { createdAt: -1 }; // Default: latest first
+    if (sortBy === 'oldest') {
+      sortOption = { createdAt: 1 };
+    } else if (sortBy === 'salary-high') {
+      sortOption = { salaryMax: -1 };
+    } else if (sortBy === 'salary-low') {
+      sortOption = { salaryMin: 1 };
+    }
+
+    // Pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Execute query
     const jobs = await Job.find(query)
-      .populate('createdBy', 'name email companyName')
-      .sort({ createdAt: -1 });
+      .populate('createdBy', 'fullName email companyName')
+      .sort(sortOption)
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    // Get total count for pagination
+    const totalJobs = await Job.countDocuments(query);
 
     res.status(200).json({
       success: true,
       count: jobs.length,
+      totalJobs,
+      totalPages: Math.ceil(totalJobs / parseInt(limit)),
+      currentPage: parseInt(page),
       jobs,
     });
   } catch (error) {

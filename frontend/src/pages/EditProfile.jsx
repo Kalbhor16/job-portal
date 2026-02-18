@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, Plus, Trash2, Loader, Save } from 'lucide-react';
-import api from '../services/api';
+import { Upload, Plus, Trash2, Loader, Save, ArrowLeft } from 'lucide-react';
+import JobSeekerHeader from '../components/JobSeekerHeader';
+import { useAuth } from '../context/AuthContext';
+import { profileService } from '../services/apiService';
 
 const EditProfile = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -17,7 +20,7 @@ const EditProfile = () => {
     headline: '',
     summary: '',
     location: '',
-    experienceLevel: 'Entry',
+    experienceLevel: 'Fresher',
     skills: [],
     portfolioLink: '',
     linkedinLink: '',
@@ -53,34 +56,37 @@ const EditProfile = () => {
   });
 
   useEffect(() => {
+    // Fetch profile when component mounts
+    // ProtectedRoute already ensures user is authenticated
     fetchProfile();
   }, []);
 
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/profile');
-      if (response.data.success) {
-        const p = response.data.data;
-        setProfile(p);
-        setFormData({
-          fullName: p.fullName || '',
-          phone: p.phone || '',
-          headline: p.headline || '',
-          summary: p.summary || '',
-          location: p.location || '',
-          experienceLevel: p.experienceLevel || 'Entry',
-          skills: p.skills || [],
-          portfolioLink: p.portfolioLink || '',
-          linkedinLink: p.linkedinLink || '',
-          githubLink: p.githubLink || '',
-          majorProjectLink: p.majorProjectLink || '',
-        });
-        setEducation(p.education || []);
-        setWorkExperience(p.workExperience || []);
-      }
+      setError('');
+      const response = await profileService.getMyProfile();
+      // Handle both response.data and direct response
+      const p = response.data?.data || response.data || response;
+      setProfile(p);
+      setFormData({
+        fullName: p.fullName || '',
+        phone: p.phone || '',
+        headline: p.headline || '',
+        summary: p.summary || '',
+        location: p.location || '',
+        experienceLevel: p.experienceLevel || 'Fresher',
+        skills: p.skills || [],
+        portfolioLink: p.portfolioLink || '',
+        linkedinLink: p.linkedinLink || '',
+        githubLink: p.githubLink || '',
+        majorProjectLink: p.majorProjectLink || '',
+      });
+      setEducation(p.education || []);
+      setWorkExperience(p.workExperience || []);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load profile');
+      console.error('Error fetching profile:', err);
+      setError(err.message || 'Failed to load profile');
     } finally {
       setLoading(false);
     }
@@ -198,34 +204,73 @@ const EditProfile = () => {
       return;
     }
 
+    if (!formData.location || formData.location.trim() === '') {
+      setError('Location is required');
+      return;
+    }
+
+    if (!Array.isArray(formData.skills) || formData.skills.length === 0) {
+      setError('Please add at least one skill');
+      return;
+    }
+
     try {
       setSaving(true);
-      const form = new FormData();
-      Object.keys(formData).forEach((key) => {
-        if (key === 'skills') {
-          form.append(key, formData[key].join(','));
-        } else {
-          form.append(key, formData[key]);
-        }
-      });
+      setError('');
+      
+      const profileData = {
+        fullName: formData.fullName,
+        phone: formData.phone,
+        headline: formData.headline || '',
+        summary: formData.summary || '',
+        experienceLevel: formData.experienceLevel || 'Fresher',
+        skills: Array.isArray(formData.skills) ? formData.skills : [formData.skills].filter(Boolean),
+        location: formData.location || '',
+        portfolioLink: formData.portfolioLink || '',
+        linkedinLink: formData.linkedinLink || '',
+        githubLink: formData.githubLink || '',
+        majorProjectLink: formData.majorProjectLink || '',
+      };
 
-      if (files.profilePhoto) form.append('profilePhoto', files.profilePhoto);
-      if (files.resume) form.append('resume', files.resume);
-
-      const response = await api.put('/profile', form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-
-      if (response.data.success) {
-        setSuccess('Profile updated successfully');
-        setTimeout(() => setSuccess(''), 3000);
+      let response;
+      
+      // If there are files, use FormData; otherwise use JSON
+      if (files.profilePhoto || files.resume) {
+        const form = new FormData();
+        Object.keys(profileData).forEach((key) => {
+          if (key === 'skills') {
+            form.append(key, profileData[key].join(','));
+          } else {
+            form.append(key, profileData[key]);
+          }
+        });
+        if (files.profilePhoto) form.append('profilePhoto', files.profilePhoto);
+        if (files.resume) form.append('resume', files.resume);
+        
+        console.log('Saving profile with files...');
+        response = await profileService.updateProfile(form);
+      } else {
+        console.log('Saving profile without files...');
+        response = await profileService.updateProfile(profileData);
       }
+      
+      console.log('Save response:', response);
+      setSuccess('Profile updated successfully');
+      setError('');
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save profile');
+      console.error('Error saving profile:', err);
+      console.error('Error details:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message
+      });
+      setError(err.response?.data?.message || err.message || 'Failed to save profile');
     } finally {
       setSaving(false);
     }
   };
+
 
   if (loading) {
     return (
@@ -236,25 +281,36 @@ const EditProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Edit Your Profile</h1>
-
-        {/* Messages */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-            {error}
+    <>
+      <JobSeekerHeader />
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 p-4 md:p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-4 mb-8">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-green-100 rounded-lg transition flex items-center gap-2 text-green-600"
+            >
+              <ArrowLeft size={20} />
+              Back
+            </button>
+            <h1 className="text-3xl font-bold text-gray-900">Edit Your Profile</h1>
           </div>
-        )}
-        {success && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
-            {success}
-          </div>
-        )}
 
-        <div className="bg-white rounded-lg shadow-lg p-6 md:p-8 space-y-8">
-          {/* Basic Info */}
-          <section>
+          {/* Messages */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+              {success}
+            </div>
+          )}
+
+          <div className="bg-white rounded-lg shadow-lg p-6 md:p-8 space-y-8">
+            {/* Basic Info */}
+            <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Basic Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -323,8 +379,8 @@ const EditProfile = () => {
             </div>
           </section>
 
-          {/* Experience Level */}
-          <section>
+            {/* Experience Level */}
+            <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Experience Level</h2>
             <select
               name="experienceLevel"
@@ -343,8 +399,8 @@ const EditProfile = () => {
             </select>
           </section>
 
-          {/* File Uploads */}
-          <section>
+            {/* File Uploads */}
+            <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">File Uploads</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -380,8 +436,8 @@ const EditProfile = () => {
             </div>
           </section>
 
-          {/* Links */}
-          <section>
+            {/* Links */}
+            <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Social & Portfolio Links</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <input
@@ -419,8 +475,8 @@ const EditProfile = () => {
             </div>
           </section>
 
-          {/* Skills */}
-          <section>
+            {/* Skills */}
+            <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Skills</h2>
             <div className="flex gap-2 mb-4">
               <input
@@ -459,8 +515,8 @@ const EditProfile = () => {
             </div>
           </section>
 
-          {/* Education */}
-          <section>
+            {/* Education */}
+            <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Education</h2>
             {education.map((edu) => (
               <div key={edu._id} className="mb-4 p-4 bg-gray-50 rounded-lg flex justify-between items-start">
@@ -536,8 +592,8 @@ const EditProfile = () => {
             </div>
           </section>
 
-          {/* Work Experience */}
-          <section>
+            {/* Work Experience */}
+            <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Work Experience</h2>
             {workExperience.map((exp) => (
               <div key={exp._id} className="mb-4 p-4 bg-gray-50 rounded-lg flex justify-between items-start">
@@ -633,9 +689,9 @@ const EditProfile = () => {
             </div>
           </section>
 
-          {/* Save Button */}
-          <div className="flex gap-4 pt-6 border-t">
-            <button
+            {/* Save Button */}
+            <div className="flex gap-4 pt-6 border-t">
+              <button
               onClick={handleSaveProfile}
               disabled={saving}
               className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
@@ -658,10 +714,11 @@ const EditProfile = () => {
             >
               Cancel
             </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

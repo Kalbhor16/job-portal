@@ -1,66 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Upload, ArrowLeft, Loader } from 'lucide-react';
-import api from '../services/api';
+import JobSeekerHeader from '../components/JobSeekerHeader';
+import { jobService, applicationService } from '../services/apiService';
+import { Upload, ArrowLeft, Loader, AlertCircle } from 'lucide-react';
 
-const ApplyJob = () => {
-  const { id } = useParams();
+export default function ApplyJob() {
+  const { jobId } = useParams();
   const navigate = useNavigate();
   
   const [job, setJob] = useState(null);
-  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [resume, setResume] = useState(null);
+  const [resumeName, setResumeName] = useState('');
   
   const [formData, setFormData] = useState({
-    resumeFile: null,
     coverLetter: '',
-    portfolioLink: '',
-    linkedinLink: '',
-    githubLink: '',
-    majorProjectLink: '',
     answers: {},
   });
 
-  const [filePreview, setFilePreview] = useState('');
-
   useEffect(() => {
-    fetchJobAndProfile();
-  }, [id]);
+    fetchJob();
+  }, [jobId]);
 
-  const fetchJobAndProfile = async () => {
+  const fetchJob = async () => {
     try {
       setLoading(true);
-      const [jobRes, profileRes] = await Promise.all([
-        api.get(`/jobs/${id}`),
-        api.get('/profile'),
-      ]);
-
-      if (jobRes.data.success) setJob(jobRes.data.data);
-      if (profileRes.data.success) setProfile(profileRes.data.data);
+      const response = await jobService.getJobById(jobId);
+      setJob(response);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load job or profile');
+      setError(err.message || 'Failed to load job');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleResumeChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData((prev) => ({ ...prev, resumeFile: file }));
-      setFilePreview(file.name);
+      setResume(file);
+      setResumeName(file.name);
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleAnswerChange = (questionIndex, answer) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       answers: {
         ...prev.answers,
@@ -73,41 +63,32 @@ const ApplyJob = () => {
     e.preventDefault();
     setError('');
 
+    if (!resume) {
+      setError('Please upload your resume');
+      return;
+    }
+
     try {
       setSubmitting(true);
-
-      // Create FormData for file upload
+      
       const form = new FormData();
-      if (formData.resumeFile) {
-        form.append('resume', formData.resumeFile);
-      }
+      form.append('resume', resume);
       form.append('coverLetter', formData.coverLetter);
-      form.append('portfolioLink', formData.portfolioLink);
-      form.append('linkedinLink', formData.linkedinLink);
-      form.append('githubLink', formData.githubLink);
-      form.append('majorProjectLink', formData.majorProjectLink);
 
-      // Add answers
       if (job?.customQuestions && job.customQuestions.length > 0) {
-        form.append('answers', JSON.stringify(
-          job.customQuestions.map((q, idx) => ({
-            question: q.questionText,
-            answer: formData.answers[idx] || '',
-          }))
-        ));
+        const answers = job.customQuestions.map((q, idx) => ({
+          question: q.question,
+          answer: formData.answers[idx] || '',
+        }));
+        form.append('answers', JSON.stringify(answers));
       }
 
-      const response = await api.post(`/applications/${id}`, form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      await applicationService.applyJob(jobId, form);
+      navigate('/applications', {
+        state: { message: 'Application submitted successfully!' },
       });
-
-      if (response.data.success) {
-        navigate('/applications', {
-          state: { message: 'Application submitted successfully!' },
-        });
-      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to submit application');
+      setError(err.message || 'Failed to submit application');
     } finally {
       setSubmitting(false);
     }
@@ -115,63 +96,61 @@ const ApplyJob = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader className="w-8 h-8 animate-spin text-green-600" />
+      <div className="min-h-screen bg-gray-50">
+        <JobSeekerHeader />
+        <div className="flex justify-center items-center py-32">
+          <Loader className="w-8 h-8 text-blue-600 animate-spin" />
+        </div>
       </div>
     );
   }
 
   if (!job) {
     return (
-      <div className="max-w-2xl mx-auto p-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-green-600 hover:text-green-700 mb-4"
-        >
-          <ArrowLeft size={20} />
-          Go Back
-        </button>
-        <div className="text-center py-12">
-          <p className="text-gray-600">Job not found</p>
+      <div className="min-h-screen bg-gray-50">
+        <JobSeekerHeader />
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          <button
+            onClick={() => navigate('/jobs')}
+            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Jobs
+          </button>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+            <p className="text-yellow-800">Job not found</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 p-4 md:p-8">
-      <div className="max-w-3xl mx-auto">
-        {/* Header */}
+    <div className="min-h-screen bg-gray-50">
+      <JobSeekerHeader />
+
+      <div className="max-w-3xl mx-auto px-4 py-8">
         <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-green-600 hover:text-green-700 mb-6"
+          onClick={() => navigate(`/job-details/${jobId}`)}
+          className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6"
         >
-          <ArrowLeft size={20} />
-          Back to Job
+          <ArrowLeft className="w-4 h-4" />
+          Back to Job Details
         </button>
 
-        <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
+        <div className="bg-white rounded-lg shadow-md p-8">
           {/* Job Summary */}
           <div className="mb-8 pb-8 border-b">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">{job.title}</h1>
-            <p className="text-gray-600 mb-4">{job.description?.substring(0, 100)}...</p>
-            {job.requiredLinks && Object.keys(job.requiredLinks).length > 0 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm font-semibold text-blue-900 mb-2">Required Links:</p>
-                <div className="space-y-1 text-sm text-blue-800">
-                  {job.requiredLinks.portfolio && <p>• Portfolio (Required)</p>}
-                  {job.requiredLinks.linkedin && <p>• LinkedIn (Required)</p>}
-                  {job.requiredLinks.github && <p>• GitHub (Required)</p>}
-                  {job.requiredLinks.majorProject && <p>• Major Project (Required)</p>}
-                </div>
-              </div>
-            )}
+            <p className="text-gray-600 mb-4">{job.company}</p>
+            <p className="text-gray-700 line-clamp-3">{job.description}</p>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-              {error}
+            <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <p className="text-red-700">{error}</p>
             </div>
           )}
 
@@ -179,31 +158,31 @@ const ApplyJob = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Resume Upload */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-3">
+              <label className="block text-sm font-bold text-gray-900 mb-3">
                 Resume <span className="text-red-600">*</span>
               </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-green-500 transition cursor-pointer bg-gray-50">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 hover:border-blue-500 transition cursor-pointer bg-gray-50">
                 <input
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  onChange={handleFileChange}
+                  onChange={handleResumeChange}
                   className="hidden"
-                  id="resume-upload"
+                  id="resume-input"
                   required
                 />
-                <label htmlFor="resume-upload" className="flex flex-col items-center justify-center cursor-pointer">
+                <label htmlFor="resume-input" className="flex flex-col items-center justify-center cursor-pointer">
                   <Upload className="w-8 h-8 text-gray-400 mb-2" />
                   <p className="text-sm font-medium text-gray-900">
-                    {filePreview || 'Click or drag to upload resume'}
+                    {resumeName || 'Click to upload resume'}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">PDF, DOC, or DOCX (Max 10MB)</p>
+                  <p className="text-xs text-gray-500 mt-1">PDF, DOC, DOCX (Max 10MB)</p>
                 </label>
               </div>
             </div>
 
             {/* Cover Letter */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-3">
+              <label className="block text-sm font-bold text-gray-900 mb-3">
                 Cover Letter
               </label>
               <textarea
@@ -212,77 +191,20 @@ const ApplyJob = () => {
                 onChange={handleInputChange}
                 placeholder="Tell the recruiter why you're interested in this role..."
                 rows="5"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-            </div>
-
-            {/* Social & Portfolio Links */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Portfolio Link
-                </label>
-                <input
-                  type="url"
-                  name="portfolioLink"
-                  value={formData.portfolioLink}
-                  onChange={handleInputChange}
-                  placeholder="https://yourportfolio.com"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  LinkedIn Profile
-                </label>
-                <input
-                  type="url"
-                  name="linkedinLink"
-                  value={formData.linkedinLink}
-                  onChange={handleInputChange}
-                  placeholder="https://linkedin.com/in/yourprofile"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  GitHub Profile
-                </label>
-                <input
-                  type="url"
-                  name="githubLink"
-                  value={formData.githubLink}
-                  onChange={handleInputChange}
-                  placeholder="https://github.com/yourprofile"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Major Project Link
-                </label>
-                <input
-                  type="url"
-                  name="majorProjectLink"
-                  value={formData.majorProjectLink}
-                  onChange={handleInputChange}
-                  placeholder="https://github.com/yourproject"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
+              <p className="text-xs text-gray-500 mt-1">Optional - A cover letter can boost your chances</p>
             </div>
 
             {/* Custom Questions */}
             {job.customQuestions && job.customQuestions.length > 0 && (
               <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Application Questions
-                </h3>
-                <div className="space-y-4">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Application Questions</h3>
+                <div className="space-y-6">
                   {job.customQuestions.map((question, idx) => (
                     <div key={idx}>
                       <label className="block text-sm font-semibold text-gray-900 mb-2">
-                        {question.questionText}
+                        {question.question}
                         {question.required && <span className="text-red-600"> *</span>}
                       </label>
 
@@ -292,7 +214,7 @@ const ApplyJob = () => {
                           value={formData.answers[idx] || ''}
                           onChange={(e) => handleAnswerChange(idx, e.target.value)}
                           placeholder="Your answer"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           required={question.required}
                         />
                       )}
@@ -303,7 +225,7 @@ const ApplyJob = () => {
                           onChange={(e) => handleAnswerChange(idx, e.target.value)}
                           placeholder="Your answer"
                           rows="4"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           required={question.required}
                         />
                       )}
@@ -314,9 +236,10 @@ const ApplyJob = () => {
                             <input
                               type="radio"
                               name={`question-${idx}`}
-                              value="yes"
+                              value="Yes"
                               onChange={(e) => handleAnswerChange(idx, e.target.value)}
-                              checked={formData.answers[idx] === 'yes'}
+                              checked={formData.answers[idx] === 'Yes'}
+                              required={question.required}
                             />
                             <span className="text-gray-700">Yes</span>
                           </label>
@@ -324,9 +247,10 @@ const ApplyJob = () => {
                             <input
                               type="radio"
                               name={`question-${idx}`}
-                              value="no"
+                              value="No"
                               onChange={(e) => handleAnswerChange(idx, e.target.value)}
-                              checked={formData.answers[idx] === 'no'}
+                              checked={formData.answers[idx] === 'No'}
+                              required={question.required}
                             />
                             <span className="text-gray-700">No</span>
                           </label>
@@ -337,7 +261,7 @@ const ApplyJob = () => {
                         <select
                           value={formData.answers[idx] || ''}
                           onChange={(e) => handleAnswerChange(idx, e.target.value)}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           required={question.required}
                         >
                           <option value="">Select an option</option>
@@ -359,20 +283,20 @@ const ApplyJob = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {submitting ? (
-                  <span className="flex items-center justify-center gap-2">
+                  <>
                     <Loader className="w-4 h-4 animate-spin" />
                     Submitting...
-                  </span>
+                  </>
                 ) : (
                   'Submit Application'
                 )}
               </button>
               <button
                 type="button"
-                onClick={() => navigate(-1)}
+                onClick={() => navigate(`/job-details/${jobId}`)}
                 className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition"
               >
                 Cancel
@@ -383,7 +307,5 @@ const ApplyJob = () => {
       </div>
     </div>
   );
-};
-
-export default ApplyJob;
+}
 

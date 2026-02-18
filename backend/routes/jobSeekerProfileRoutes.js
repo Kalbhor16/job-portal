@@ -67,8 +67,9 @@ router.get('/', authMiddleware, getMyProfile);
 router.get('/:userId', getProfileById);
 
 // @route   PUT /api/profile
-// @desc    Update profile with photo/resume upload
+// @desc    Update profile with photo/resume upload or JSON data
 // @access  Private
+// Use multer.none() to handle JSON requests, but still accept file uploads
 router.put('/', authMiddleware, upload.fields([{ name: 'profilePhoto', maxCount: 1 }, { name: 'resume', maxCount: 1 }]), updateProfile);
 
 // Education routes

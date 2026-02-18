@@ -26,6 +26,8 @@ import EditProfile from './pages/EditProfile';
 import Applications from './pages/Applications';
 import ApplicationDetails from './pages/ApplicationDetails';
 import SavedJobs from './pages/SavedJobs';
+import Interviews from './pages/Interviews';
+import InterviewDetails from './pages/InterviewDetails';
 
 function App() {
   return (
@@ -83,6 +85,15 @@ function App() {
 
           {/* Apply Job */}
           <Route
+            path="/apply/:jobId"
+            element={
+              <ProtectedRoute requiredRole="jobseeker">
+                <ApplyJob />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
             path="/jobs/:jobId/apply"
             element={
               <ProtectedRoute requiredRole="jobseeker">
@@ -111,6 +122,26 @@ function App() {
             }
           />
 
+          {/* Interviews */}
+          <Route
+            path="/interviews"
+            element={
+              <ProtectedRoute requiredRole="jobseeker">
+                <Interviews />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Interview Details */}
+          <Route
+            path="/interviews/:interviewId"
+            element={
+              <ProtectedRoute requiredRole="jobseeker">
+                <InterviewDetails />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Saved Jobs */}
           <Route
             path="/saved-jobs"
@@ -122,6 +153,15 @@ function App() {
           />
 
           {/* Job Seeker Messaging */}
+          <Route
+            path="/messages"
+            element={
+              <ProtectedRoute>
+                <Messages />
+              </ProtectedRoute>
+            }
+          />
+          
           <Route
             path="/messages/:jobId"
             element={

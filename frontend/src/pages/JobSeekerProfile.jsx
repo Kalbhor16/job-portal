@@ -16,9 +16,10 @@ import {
   Globe,
   Download,
   Calendar,
+  Edit,
 } from 'lucide-react';
 import RecruiterLayout from '../layouts/RecruiterLayout';
-import api from '../services/api';
+import { profileService } from '../services/apiService';
 
 const JobSeekerProfile = () => {
   const { userId } = useParams();
@@ -39,10 +40,8 @@ const JobSeekerProfile = () => {
       try {
         const idToFetch = userId || authUser?.id || authUser?._id;
         if (!idToFetch) throw new Error('No user id available');
-        const response = await api.get(`/users/${idToFetch}/profile`);
-        if (response.data.success) {
-          setProfile(response.data.profile);
-        }
+        const response = await profileService.getProfileById(idToFetch);
+        setProfile(response.data?.data || response.data);
       } catch (apiErr) {
         // Use dummy data if API fails
         console.log('Using dummy profile data');
@@ -203,12 +202,26 @@ const JobSeekerProfile = () => {
 
               {/* Basic Info */}
               <div className="flex-1 pt-8">
-                <h1 className="text-3xl font-bold text-slate-900 mb-2">
-                  {profile.fullName}
-                </h1>
-                <p className="text-lg text-emerald-600 font-semibold mb-4">
-                  {profile.headline}
-                </p>
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h1 className="text-3xl font-bold text-slate-900 mb-2">
+                      {profile.fullName}
+                    </h1>
+                    <p className="text-lg text-emerald-600 font-semibold mb-4">
+                      {profile.headline}
+                    </p>
+                  </div>
+                  {/* Edit Button - Show only if viewing own profile */}
+                  {!userId || userId === authUser?._id || userId === authUser?.id ? (
+                    <button
+                      onClick={() => navigate('/profile/edit')}
+                      className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition flex items-center gap-2"
+                    >
+                      <Edit size={18} />
+                      Edit Profile
+                    </button>
+                  ) : null}
+                </div>
                 <div className="flex flex-wrap gap-4 text-slate-600">
                   <div className="flex items-center gap-2">
                     <Mail className="w-5 h-5 text-emerald-600" />
