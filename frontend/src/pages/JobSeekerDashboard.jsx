@@ -92,7 +92,7 @@ const JobSeekerDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
         <JobSeekerHeader notificationCount={notificationCount} />
         <div className="flex items-center justify-center h-screen">
           <div className="text-center">
@@ -105,7 +105,7 @@ const JobSeekerDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       <JobSeekerHeader notificationCount={notificationCount} />
       
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
@@ -121,11 +121,11 @@ const JobSeekerDashboard = () => {
         )}
 
         {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-emerald-600 to-green-600 rounded-lg p-8 text-white mb-8 shadow-lg">
-          <h1 className="text-3xl font-bold mb-2">Welcome to Your Job Portal</h1>
-          <p className="text-emerald-100">Track your applications, interviews, and job search progress in one place</p>
+        <div className="md-8">
+          <h1 className="text-3xl font-extrabold text-gray-900">Welcome to Your,<span className='text-emerald-600'> Job Seeker</span> </h1>
+          <p className="text-gray-600 mt-1">Track your applications, interviews, and job search progress in one place</p>
         </div>
-
+        <br /><br />
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Total Applications */}
@@ -217,7 +217,7 @@ const JobSeekerDashboard = () => {
                   <p>No applications yet. Start applying to jobs!</p>
                   <button
                     onClick={() => navigate('/jobs')}
-                    className="mt-4 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition"
+                    className="mt-4 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition "
                   >
                     Browse Jobs
                   </button>

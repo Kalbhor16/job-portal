@@ -118,7 +118,6 @@ export default function Jobs() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <JobSeekerHeader />
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}

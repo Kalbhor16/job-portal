@@ -50,7 +50,7 @@ const JobSeekerHeader = ({ notificationCount = 0 }) => {
                   className={`relative px-4 py-2 rounded-lg transition font-semibold ${
                     active
                       ? 'bg-emerald-100 border-2 border-emerald-500 text-emerald-700'
-                      : 'bg-gray-100 border-2 border-transparent hover:bg-gray-200 text-gray-700'
+                      : 'block px-4 py-3 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors duration-200 font-medium'
                   }`}
                 >
                   {item.label}
